@@ -1,5 +1,6 @@
 var currentMovableTransistor
 var currentSelectedPort
+var transistors = []
 
 var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     svg.setAttributeNS(null, 'width', document.body.clientWidth + 'px')
@@ -45,17 +46,17 @@ function createTransistorPort(place) {
     style.position = 'absolute'
     style.width = '10px'
     style.height = '10px'
-    style.backgroundColor = 'green'
+    style.backgroundColor = '#aaa'
 
     switch(place) {
         case 'left':
             style.left = '0px'
-            style.top = 'calc(50% - 5px)'
+            style.top = 'calc(100% - 15px)'
             break
 
         case 'right':
             style.right = '0px'
-            style.top = 'calc(50% - 5px)'
+            style.top = 'calc(100% - 15px)'
             break
 
         case 'top':
@@ -97,7 +98,7 @@ function createTransistor() {
     style.width = '40px'
     style.height = '40px'
     style.border = '1px solid #fff'
-    style.backgroundColor = 'red'
+    style.backgroundColor = '#666'
 
     element.onmousedown = function(event) {
         if(currentMovableTransistor) {
@@ -145,13 +146,13 @@ function drawTransistor(transistor, x, y) {
     transistor.y = y
 
     transistor.leftPort.x = x + 5
-    transistor.leftPort.y = y + 15
+    transistor.leftPort.y = y + 30
 
     transistor.topPort.x = x + 20
     transistor.topPort.y = y + 5
 
     transistor.rightPort.x = x + 35
-    transistor.rightPort.y = y + 15
+    transistor.rightPort.y = y + 30
 }
 
 document.body.onmousemove = function(event) {
@@ -162,25 +163,129 @@ document.body.onmousemove = function(event) {
             event.clientY - currentMovableTransistor.clickY
         )
 
-        transistor.leftPort.connections
+        currentMovableTransistor.leftPort.connections
             .forEach(function(connection) {
                 drawConnection(connection)
             })
 
-        transistor.rightPort.connections
+        currentMovableTransistor.rightPort.connections
             .forEach(function(connection) {
                 drawConnection(connection)
             })
 
-        transistor.topPort.connections
+        currentMovableTransistor.topPort.connections
             .forEach(function(connection) {
                 drawConnection(connection)
             })
     }
 }
 
+function addTransistor() {
+    var transistor = createTransistor()
+    drawTransistor(transistor, 100, 100)
+    transistors.push(transistor)
+}
+
+function execute() {
+    var powerConnections = []
+
+    transistors
+        .forEach(function(transistor){
+            transistor.leftPort.connections
+                .forEach(function(connection){
+                    if(connection.from == powerSourcePlusPort_ || connection.to == powerSourcePlusPort_)
+                        powerConnections.push(connection)
+                })
+
+            transistor.rightPort.connections
+                .forEach(function(connection){
+                    if(connection.from == powerSourcePlusPort_ || connection.to == powerSourcePlusPort_)
+                        powerConnections.push(connection)
+                })
+
+            transistor.topPort.connections
+                .forEach(function(connection){
+                    if(connection.from == powerSourcePlusPort_ || connection.to == powerSourcePlusPort_)
+                        powerConnections.push(connection)
+                })
+        })
+
+    console.log(powerConnections)
+
+    powerConnections
+        .forEach(function(connection){
+            console.log(connection)
+            connection.element.setAttributeNS(null, 'stroke', '#0f0')
+            connection.signal = true
+        })
+}
+
+var powerSource = document.createElement('span')
+    var style = powerSource.style
+    style.position = 'absolute'
+    style.width = '20px'
+    style.height = '60px'
+    style.top = '20px'
+    style.left = 'calc(50% - 10px)'
+    style.backgroundColor = '#666'
+
+    var powerSourcePlusPort_ = {
+        connections: [],
+        x: document.body.clientWidth / 2,
+        y: 80
+    }
+    var powerSourcePlusPort = document.createElement('span')
+        var style = powerSourcePlusPort.style
+        style.position = 'absolute'
+        style.width = '10px'
+        style.height = '5px'
+        style.top = '80px'
+        style.left = 'calc(50% - 5px)'
+        style.backgroundColor = '#666'
+
+        powerSourcePlusPort.onclick = function(event) {
+            if(!currentSelectedPort) {
+                currentSelectedPort = powerSourcePlusPort_
+            }
+            else if(powerSourcePlusPort_ != currentSelectedPort){
+                var connection = createConnection(currentSelectedPort, powerSourcePlusPort_)
+                drawConnection(connection)
+
+                currentSelectedPort = undefined
+            }
+            else {
+                currentSelectedPort = undefined
+            }
+
+            event.stopPropagation()
+        }
+    document.body.appendChild(powerSourcePlusPort)
+    powerSourcePlusPort_.element = powerSourcePlusPort
+document.body.appendChild(powerSource)
+
+var addButton = document.createElement('button')
+    var style = addButton.style
+    style.position = 'absolute'
+    style.left = '20px'
+    style.top = '20px'
+
+    addButton.onclick = addTransistor
+    addButton.innerHTML = 'Добавить'
+document.body.appendChild(addButton)
+
+var executeButton = document.createElement('button')
+    var style = executeButton.style
+    style.position = 'absolute'
+    style.left = '20px'
+    style.top = '60px'
+
+    executeButton.onclick = execute
+    executeButton.innerHTML = 'Выполнить'
+document.body.appendChild(executeButton)
+
+/*
 var transistor = createTransistor()
 drawTransistor(transistor, 100, 100)
 
 var transistor2 = createTransistor()
-drawTransistor(transistor2, 100, 100)
+drawTransistor(transistor2, 100, 100)*/
